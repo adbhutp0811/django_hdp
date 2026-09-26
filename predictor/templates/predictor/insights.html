@@ -1,0 +1,191 @@
+{% extends "predictor/base.html" %}
+{% load static %}
+
+{% block title %}How It Works • CardioCheck Project Documentation{% endblock %}
+
+{% block content %}
+<div class="insights-container">
+
+  <!-- Header -->
+  <div class="page-intro">
+    <h2>How the Heart Disease Predictor Works</h2>
+    <p>
+      An overview of the machine learning pipeline, clinical parameters, and dataset used to build this heart disease risk prediction application.
+    </p>
+  </div>
+
+  <!-- Card 1: Machine Learning Overview -->
+  <div class="insights-card">
+    <h3>1. Model Overview & Specifications</h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;">
+      This project uses a <strong>K-Nearest Neighbors (KNN)</strong> classification algorithm implemented with Python's Scikit-Learn library. KNN was chosen for its intuitive approach: to assess a new patient's risk, it looks at the <strong>5 most similar patients</strong> in the historical dataset and calculates the probability based on their known cardiac outcomes.
+    </p>
+
+    <div class="insights-stat-row">
+      <div class="stat-item">
+        <div class="stat-num">5</div>
+        <div class="stat-desc">Neighbors (K)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">15</div>
+        <div class="stat-desc">Feature Inputs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">734</div>
+        <div class="stat-desc">Training Records</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">Standard</div>
+        <div class="stat-desc">Scaler Normalization</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Preprocessing Steps -->
+  <div class="insights-card">
+    <h3>2. How Patient Data is Processed</h3>
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.88rem; line-height: 1.5; color: var(--text-body);">
+      <div>
+        <strong>Step 1 — Data Collection:</strong> The patient's vitals (age, blood pressure, cholesterol), symptoms (chest pain, exercise angina), and ECG metrics are collected through the web form.
+      </div>
+      <div>
+        <strong>Step 2 — One-Hot Categorical Encoding:</strong> Categories such as chest pain type, resting ECG, and ST slope are transformed into numerical binary columns, matching the format the model was trained on.
+      </div>
+      <div>
+        <strong>Step 3 — Feature Standardization:</strong> Because metrics are measured on vastly different scales (e.g. cholesterol is ~200 mg/dL while ST depression is ~1.0 mm), a <code>StandardScaler</code> centers each feature around zero with unit variance so no single feature unintentionally dominates the prediction.
+      </div>
+      <div>
+        <strong>Step 4 — KNN Distance & Probability:</strong> The model computes Euclidean distances to find the 5 closest patient cases and returns both the predicted class (0 = Low Risk, 1 = High Risk) and the percentage probability.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: 15 Features Table -->
+  <div class="insights-card">
+    <h3>3. The 15 Features Used by the Model</h3>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+      These 15 parameters are read from <code>heart_columns.pkl</code> and provided to the model:
+    </p>
+
+    <div style="overflow-x: auto;">
+      <table class="feature-table-clean">
+        <thead>
+          <tr>
+            <th>Feature Name</th>
+            <th>Type</th>
+            <th>Measurement Unit / Options</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-badge">Age</span></td>
+            <td>Number</td>
+            <td>Years (18–95)</td>
+            <td>Risk of coronary artery disease increases with age.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">RestingBP</span></td>
+            <td>Number</td>
+            <td>mm Hg</td>
+            <td>Chronic high blood pressure strains heart arteries.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">Cholesterol</span></td>
+            <td>Number</td>
+            <td>mg/dL</td>
+            <td>High cholesterol contributes to arterial plaque buildup.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">FastingBS</span></td>
+            <td>Binary</td>
+            <td>0 = &le;120 mg/dL, 1 = &gt;120 mg/dL</td>
+            <td>Indicator of diabetes or pre-diabetes.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">MaxHR</span></td>
+            <td>Number</td>
+            <td>bpm (beats per minute)</td>
+            <td>Maximum heart rate achieved during exercise testing.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">Oldpeak</span></td>
+            <td>Number</td>
+            <td>mm (ST depression)</td>
+            <td>Depression in the ST wave during stress vs at rest.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">Sex_M</span></td>
+            <td>Binary</td>
+            <td>1 = Male, 0 = Female</td>
+            <td>Biological sex marker.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ChestPainType_ATA</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Atypical Angina discomfort.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ChestPainType_NAP</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Non-Anginal chest pain.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ChestPainType_TA</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Typical Angina (classic heart chest pain).</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">RestingECG_Normal</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Standard electrical conduction at rest.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">RestingECG_ST</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Resting ST-T wave abnormalities.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ExerciseAngina_Y</span></td>
+            <td>Binary</td>
+            <td>1 = Yes, 0 = No</td>
+            <td>Chest pain triggered by physical exercise.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ST_Slope_Flat</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Flat ST wave during peak exercise.</td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">ST_Slope_Up</span></td>
+            <td>Binary</td>
+            <td>0 or 1</td>
+            <td>Upsloping ST wave (usually a healthy response).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 4: Dataset Origin -->
+  <div class="insights-card">
+    <h3>4. Dataset Information</h3>
+    <p style="color: var(--text-body); font-size: 0.88rem; line-height: 1.6;">
+      The model was trained on the renowned <strong>UCI Heart Disease Dataset</strong> (available on Kaggle), combining clinical records from 5 reputable medical institutions:
+      the Cleveland Clinic Foundation, the Hungarian Institute of Cardiology, the University Hospital of Zurich, the University Hospital of Basel, and the V.A. Medical Center in Long Beach, California.
+    </p>
+    <div style="margin-top: 1.25rem;">
+      <a href="{% url 'predictor:index' %}" class="btn-submit" style="display: inline-flex; width: auto; text-decoration: none;">
+        ← Back to Heart Risk Calculator
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CardioCheck - Heart Disease Risk Prediction System. Predict cardiac health risk using clinical metrics.">
+  <title>{% block title %}CardioCheck • Heart Disease Risk Prediction{% endblock %}</title>
+
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{% static 'predictor/css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" id="app-navbar">
+    <div class="nav-container">
+      <a href="{% url 'predictor:index' %}" class="brand-link" id="nav-brand-logo">
+        <div class="brand-icon">
+          <svg style="width:20px;height:20px;fill:currentColor;" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-logo-text">
+            CardioCheck <span class="brand-tag">v1.0</span>
+          </div>
+          <div class="nav-sub">Heart Disease Risk Prediction System</div>
+        </div>
+      </a>
+
+      <div class="nav-links">
+        <div class="nav-badge" id="badge-model-status">
+          <span class="nav-dot"></span>
+          <span>Model Ready (KNN)</span>
+        </div>
+        <a href="{% url 'predictor:index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" id="nav-link-calculator">
+          Calculator
+        </a>
+        <a href="{% url 'predictor:insights' %}" class="nav-link {% if request.resolver_match.url_name == 'insights' %}active{% endif %}" id="nav-link-about">
+          How It Works
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="main-container" id="main-app-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer style="background: #ffffff; border-top: 1px solid var(--border-color); padding: 2rem 1.5rem; color: var(--text-muted); font-size: 0.85rem; text-align: center;">
+    <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.5rem;">
+      <p style="font-weight: 600; color: var(--text-main);">
+        Heart Disease Prediction Project • Developed with Django & Scikit-Learn
+      </p>
+      <p style="font-size: 0.78rem; line-height: 1.5; color: var(--text-muted);">
+        Disclaimer: This tool is an academic / screening demonstration based on the UCI Heart Disease dataset. It is intended for educational purposes and is not a substitute for professional medical diagnosis or clinical judgment. Please consult a qualified cardiologist for health evaluations.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript File -->
+  <script src="{% static 'predictor/js/main.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

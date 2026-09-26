@@ -1,0 +1,414 @@
+{% extends "predictor/base.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Page Intro -->
+<div class="page-intro">
+  <h2>Heart Disease Risk Calculator</h2>
+  <p>
+    Enter patient vitals, symptoms, and exercise ECG results below to assess the likelihood of heart disease using our trained machine learning model.
+  </p>
+</div>
+
+<!-- Content Grid -->
+<div class="content-grid">
+
+  <!-- Left: Medical Input Form -->
+  <div class="form-container">
+    <form id="heart-prediction-form" method="POST" action="{% url 'predictor:index' %}">
+      {% csrf_token %}
+
+      <!-- Card 1: Patient Information & Vitals -->
+      <div class="form-card" id="card-patient-vitals">
+        <div class="form-card-title">
+          <svg style="width:18px;height:18px;color:var(--blue-primary);fill:currentColor;" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+          1. Patient Information & Vitals
+        </div>
+        <div class="form-card-subtitle">
+          Basic demographic details and resting circulatory measurements.
+        </div>
+
+        <!-- Optional Patient Name for Report Printing -->
+        <div class="form-group">
+          <label for="input-patient-name" class="form-label">Patient Name or ID (Optional)</label>
+          <input type="text" id="input-patient-name" name="patient_name" class="clean-number-input" style="width: 100%; text-align: left;" value="" placeholder="e.g. John Doe, Patient #102">
+          <span class="input-hint">Will be shown on the printable patient summary report.</span>
+        </div>
+
+        <div class="input-grid-2">
+          <!-- Age -->
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="input-age" class="form-label">Age</label>
+              <span class="label-value-pill" id="pill-val-age">{{ default_patient.age }} years</span>
+            </div>
+            <div class="slider-sync-row">
+              <input type="range" class="clean-slider" id="slider-age" min="18" max="95" value="{{ default_patient.age }}">
+              <input type="number" class="clean-number-input" id="input-age" name="age" min="18" max="95" value="{{ default_patient.age }}" required>
+            </div>
+            <span class="input-hint">Patient's age in years (18–95)</span>
+          </div>
+
+          <!-- Gender -->
+          <div class="form-group">
+            <label class="form-label">Biological Sex</label>
+            <div class="segmented-pills">
+              <div class="segmented-pill">
+                <input type="radio" name="sex" id="sex-m" value="M" {% if default_patient.sex == 'M' %}checked{% endif %}>
+                <label for="sex-m" class="segmented-label">
+                  <span class="seg-main">Male</span>
+                </label>
+              </div>
+              <div class="segmented-pill">
+                <input type="radio" name="sex" id="sex-f" value="F" {% if default_patient.sex == 'F' %}checked{% endif %}>
+                <label for="sex-f" class="segmented-label">
+                  <span class="seg-main">Female</span>
+                </label>
+              </div>
+            </div>
+            <span class="input-hint">Biological sex recorded at clinical intake</span>
+          </div>
+
+          <!-- Resting Blood Pressure -->
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="input-resting-bp" class="form-label">Resting Blood Pressure</label>
+              <span class="label-value-pill" id="pill-val-resting-bp">{{ default_patient.resting_bp }} mm Hg</span>
+            </div>
+            <div class="slider-sync-row">
+              <input type="range" class="clean-slider" id="slider-resting-bp" min="80" max="200" value="{{ default_patient.resting_bp }}">
+              <input type="number" class="clean-number-input" id="input-resting-bp" name="resting_bp" min="80" max="200" value="{{ default_patient.resting_bp }}" required>
+            </div>
+            <span class="input-hint">Systolic blood pressure at rest (Normal: &lt; 120 mm Hg)</span>
+          </div>
+
+          <!-- Cholesterol -->
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="input-cholesterol" class="form-label">Serum Cholesterol</label>
+              <span class="label-value-pill" id="pill-val-cholesterol">{{ default_patient.cholesterol }} mg/dL</span>
+            </div>
+            <div class="slider-sync-row">
+              <input type="range" class="clean-slider" id="slider-cholesterol" min="100" max="600" value="{{ default_patient.cholesterol }}">
+              <input type="number" class="clean-number-input" id="input-cholesterol" name="cholesterol" min="100" max="600" value="{{ default_patient.cholesterol }}" required>
+            </div>
+            <span class="input-hint">Total serum cholesterol (Desirable: &lt; 200 mg/dL)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Symptoms & Blood Sugar -->
+      <div class="form-card" id="card-symptoms-tests">
+        <div class="form-card-title">
+          <svg style="width:18px;height:18px;color:var(--warning);fill:currentColor;" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+          </svg>
+          2. Symptoms & Blood Sugar
+        </div>
+        <div class="form-card-subtitle">
+          Chest discomfort evaluation and fasting blood sugar test.
+        </div>
+
+        <!-- Fasting Blood Sugar -->
+        <div class="form-group">
+          <label class="form-label">Fasting Blood Sugar</label>
+          <div class="segmented-pills">
+            <div class="segmented-pill">
+              <input type="radio" name="fasting_bs" id="fbs-0" value="0" {% if default_patient.fasting_bs == 0 %}checked{% endif %}>
+              <label for="fbs-0" class="segmented-label">
+                <span class="seg-main">Normal (&le; 120 mg/dL)</span>
+                <span class="seg-sub">Healthy fasting sugar</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="fasting_bs" id="fbs-1" value="1" {% if default_patient.fasting_bs == 1 %}checked{% endif %}>
+              <label for="fbs-1" class="segmented-label">
+                <span class="seg-main">Elevated (&gt; 120 mg/dL)</span>
+                <span class="seg-sub">Diabetic / pre-diabetic risk</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chest Pain Type -->
+        <div class="form-group">
+          <label class="form-label">Chest Pain Type</label>
+          <div class="segmented-pills" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
+            <div class="segmented-pill">
+              <input type="radio" name="chest_pain" id="cp-ata" value="ATA" {% if default_patient.chest_pain == 'ATA' %}checked{% endif %}>
+              <label for="cp-ata" class="segmented-label">
+                <span class="seg-main">Atypical Angina</span>
+                <span class="seg-sub">Non-cardiac chest ache</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="chest_pain" id="cp-nap" value="NAP" {% if default_patient.chest_pain == 'NAP' %}checked{% endif %}>
+              <label for="cp-nap" class="segmented-label">
+                <span class="seg-main">Non-Anginal</span>
+                <span class="seg-sub">Muscle or nerve discomfort</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="chest_pain" id="cp-ta" value="TA" {% if default_patient.chest_pain == 'TA' %}checked{% endif %}>
+              <label for="cp-ta" class="segmented-label">
+                <span class="seg-main">Typical Angina</span>
+                <span class="seg-sub">Classic constrictive pain</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="chest_pain" id="cp-asy" value="ASY" {% if default_patient.chest_pain == 'ASY' %}checked{% endif %}>
+              <label for="cp-asy" class="segmented-label">
+                <span class="seg-main">Asymptomatic</span>
+                <span class="seg-sub">No chest pain reported</span>
+              </label>
+            </div>
+          </div>
+          <span class="input-hint">Note: In cardiovascular studies, asymptomatic patients referred for testing may have silent ischemia.</span>
+        </div>
+
+        <!-- Exercise Angina -->
+        <div class="form-group">
+          <label class="form-label">Chest Pain During Exercise?</label>
+          <div class="segmented-pills">
+            <div class="segmented-pill">
+              <input type="radio" name="exercise_angina" id="angina-n" value="N" {% if default_patient.exercise_angina == 'N' %}checked{% endif %}>
+              <label for="angina-n" class="segmented-label">
+                <span class="seg-main">No Pain During Exercise</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="exercise_angina" id="angina-y" value="Y" {% if default_patient.exercise_angina == 'Y' %}checked{% endif %}>
+              <label for="angina-y" class="segmented-label">
+                <span class="seg-main">Yes (Exertional Angina)</span>
+              </label>
+            </div>
+          </div>
+          <span class="input-hint">Chest tightness or shortness of breath brought on specifically by physical exertion.</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Heart Activity & Electrocardiogram -->
+      <div class="form-card" id="card-ecg-results">
+        <div class="form-card-title">
+          <svg style="width:18px;height:18px;color:var(--primary);fill:currentColor;" viewBox="0 0 24 24">
+            <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+          </svg>
+          3. Heart Activity & ECG Results
+        </div>
+        <div class="form-card-subtitle">
+          Electrocardiographic conduction patterns and exercise stress response.
+        </div>
+
+        <!-- Resting ECG -->
+        <div class="form-group">
+          <label class="form-label">Resting ECG Result</label>
+          <div class="segmented-pills">
+            <div class="segmented-pill">
+              <input type="radio" name="resting_ecg" id="ecg-norm" value="Normal" {% if default_patient.resting_ecg == 'Normal' %}checked{% endif %}>
+              <label for="ecg-norm" class="segmented-label">
+                <span class="seg-main">Normal</span>
+                <span class="seg-sub">Standard electrical trace</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="resting_ecg" id="ecg-st" value="ST" {% if default_patient.resting_ecg == 'ST' %}checked{% endif %}>
+              <label for="ecg-st" class="segmented-label">
+                <span class="seg-main">ST-T Abnormality</span>
+                <span class="seg-sub">T-wave inversion / &gt;0.05 mV</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="resting_ecg" id="ecg-lvh" value="LVH" {% if default_patient.resting_ecg == 'LVH' %}checked{% endif %}>
+              <label for="ecg-lvh" class="segmented-label">
+                <span class="seg-main">LVH</span>
+                <span class="seg-sub">Ventricular hypertrophy</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-grid-2">
+          <!-- Max Heart Rate -->
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="input-max-hr" class="form-label">Max Heart Rate Reached</label>
+              <span class="label-value-pill" id="pill-val-max-hr">{{ default_patient.max_hr }} bpm</span>
+            </div>
+            <div class="slider-sync-row">
+              <input type="range" class="clean-slider" id="slider-max-hr" min="60" max="220" value="{{ default_patient.max_hr }}">
+              <input type="number" class="clean-number-input" id="input-max-hr" name="max_hr" min="60" max="220" value="{{ default_patient.max_hr }}" required>
+            </div>
+            <span class="input-hint">Peak heart rate achieved during exercise stress testing</span>
+          </div>
+
+          <!-- ST Depression (Oldpeak) -->
+          <div class="form-group">
+            <div class="input-label-row">
+              <label for="input-oldpeak" class="form-label">ST Depression (Oldpeak)</label>
+              <span class="label-value-pill" id="pill-val-oldpeak">{{ default_patient.oldpeak }}</span>
+            </div>
+            <div class="slider-sync-row">
+              <input type="range" class="clean-slider" id="slider-oldpeak" min="0.0" max="6.0" value="{{ default_patient.oldpeak }}" step="0.1">
+              <input type="number" class="clean-number-input" id="input-oldpeak" name="oldpeak" min="0.0" max="6.0" value="{{ default_patient.oldpeak }}" step="0.1" required>
+            </div>
+            <span class="input-hint">Exercise-induced ST depression (Values &gt; 1.5 suggest ischemia)</span>
+          </div>
+        </div>
+
+        <!-- ST Segment Slope -->
+        <div class="form-group" style="margin-top: 0.5rem;">
+          <label class="form-label">Peak Exercise ST Segment Slope</label>
+          <div class="segmented-pills">
+            <div class="segmented-pill">
+              <input type="radio" name="st_slope" id="slope-up" value="Up" {% if default_patient.st_slope == 'Up' %}checked{% endif %}>
+              <label for="slope-up" class="segmented-label">
+                <span class="seg-main">Upsloping (Up)</span>
+                <span class="seg-sub">Healthy cardiac response</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="st_slope" id="slope-flat" value="Flat" {% if default_patient.st_slope == 'Flat' %}checked{% endif %}>
+              <label for="slope-flat" class="segmented-label">
+                <span class="seg-main">Flat</span>
+                <span class="seg-sub">Reduced coronary flow</span>
+              </label>
+            </div>
+            <div class="segmented-pill">
+              <input type="radio" name="st_slope" id="slope-down" value="Down" {% if default_patient.st_slope == 'Down' %}checked{% endif %}>
+              <label for="slope-down" class="segmented-label">
+                <span class="seg-main">Downsloping (Down)</span>
+                <span class="seg-sub">High severity ischemic sign</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-submit" id="btn-predict">
+        <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        Calculate Heart Disease Risk
+      </button>
+    </form>
+  </div>
+
+  <!-- Right: Clean Human Results Card -->
+  <div class="results-container">
+    <div class="results-sticky">
+
+      <!-- Initial Awaiting State (Visible before user clicks Calculate) -->
+      <div class="results-card" id="results-placeholder" style="text-align: center; padding: 3rem 1.5rem;">
+        <div style="width: 52px; height: 52px; background: var(--blue-subtle); color: var(--blue-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+          <svg style="width: 26px; height: 26px; fill: currentColor;" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+          </svg>
+        </div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Awaiting Assessment</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; max-width: 300px; margin: 0 auto 1.25rem auto;">
+          Enter the patient's vitals on the left and click <strong>"Calculate Heart Disease Risk"</strong> to view the clinical prediction.
+        </p>
+        <div style="font-size: 0.78rem; color: var(--text-muted); background: var(--bg-subtle); padding: 0.45rem 0.9rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.4rem;">
+          <span>ℹ️</span> 15 biomarkers will be evaluated
+        </div>
+      </div>
+
+      <!-- Results Card (Hidden until user clicks Calculate) -->
+      <div class="results-card" id="results-card" style="display: none;">
+        <div class="results-top">
+          <div class="results-title">Assessment Results</div>
+          <span class="results-tag" id="results-badge-status">Instant Calculation</span>
+        </div>
+
+        <!-- Risk Score Box -->
+        <div class="score-box" id="score-box">
+          <div class="score-number">
+            <span id="risk-score-value">0</span><span class="score-symbol">%</span>
+          </div>
+          <div class="score-caption">Calculated Risk Probability</div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="status-banner success" id="verdict-banner">
+          <div class="status-icon" id="verdict-icon">✓</div>
+          <div>
+            <div class="status-heading" id="verdict-title">Low Risk Detected</div>
+            <div class="status-text" id="verdict-desc">
+              Patient biomarkers indicate a low probability of heart disease. Continue regular health screenings.
+            </div>
+          </div>
+        </div>
+
+        <!-- Probability Distribution -->
+        <div class="prob-section">
+          <div class="prob-title">Model Probability Distribution</div>
+
+          <div class="prob-meter-row">
+            <div class="prob-meta">
+              <span>Risk of Heart Disease (Class 1)</span>
+              <span id="val-prob-high" style="color: var(--primary);">0%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill fill-danger" id="fill-prob-high" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="prob-meter-row">
+            <div class="prob-meta">
+              <span>Low Risk / Healthy (Class 0)</span>
+              <span id="val-prob-low" style="color: var(--success);">100%</span>
+            </div>
+            <div class="prob-track">
+              <div class="prob-fill fill-success" id="fill-prob-low" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key Observations & Findings -->
+        <div class="findings-section">
+          <div class="findings-title">Key Health Observations</div>
+          <div class="findings-list" id="factors-list-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="advice-box">
+          <div class="advice-title">Recommended Clinical Next Steps</div>
+          <ul class="advice-list" id="recommendations-list">
+            <li>Maintain regular cardiovascular exercise (at least 150 mins per week).</li>
+            <li>Schedule routine annual wellness checkups with your doctor.</li>
+          </ul>
+        </div>
+
+        <!-- Patient Data Table (Ready for printing) -->
+        <details class="summary-table-wrap">
+          <summary style="font-size: 0.8rem; font-weight: 600; color: var(--blue-primary); cursor: pointer;">
+            View Detailed Summary Table
+          </summary>
+          <table class="summary-table">
+            <tbody id="patient-summary-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </details>
+
+        <!-- Action: Print Patient Report -->
+        <div style="margin-top: 1.25rem;">
+          <button type="button" class="btn-print" id="btn-print-report">
+            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24">
+              <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+            </svg>
+            Print Patient Summary
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
